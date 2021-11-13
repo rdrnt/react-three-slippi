@@ -1,23 +1,50 @@
 import React from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, OrbitControls, FlyControls } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import {
+  Environment,
+  Html,
+  OrbitControls,
+  Stats,
+  useGLTF,
+  useProgress,
+} from '@react-three/drei';
+
+import Character from './components/Character';
+import Stage from './components/Stage';
 
 function App(): JSX.Element {
   return (
     <div className="App">
-      <Canvas>
+      <Canvas camera={{ position: [-120, 10, 0], fov: 20 }}>
         <OrbitControls />
-        <React.Suspense fallback={null}>
-          <Environment preset="sunset" background />
-          <ambientLight intensity={0.3} />
-          <directionalLight color="red" position={[1, 2, 5]} />
-          <Box />
+        <Stats />
+        <React.Suspense fallback={<Loader />}>
+          <Scene>
+            <Character />
+
+            <Stage />
+          </Scene>
         </React.Suspense>
       </Canvas>
     </div>
   );
 }
+
+const MAX_WIDTH = 30;
+
+const Scene: React.FunctionComponent = ({ children }) => {
+  return (
+    <>
+      <Environment preset="sunset" background />
+      <ambientLight intensity={0.3} />
+      <directionalLight color="red" position={[1, 2, 5]} />
+      <gridHelper scale={MAX_WIDTH / 10} />
+
+      {children}
+    </>
+  );
+};
 
 function Box(props) {
   // This reference will give us direct access to the mesh
@@ -35,9 +62,9 @@ function Box(props) {
       {...props}
       ref={mesh}
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-      onClick={e => setActive(!active)}
-      onPointerOver={e => setHover(true)}
-      onPointerOut={e => setHover(false)}>
+      onClick={() => setActive(!active)}
+      onPointerOver={() => setHover(true)}
+      onPointerOut={() => setHover(false)}>
       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
       <meshStandardMaterial
         attach="material"
@@ -45,6 +72,11 @@ function Box(props) {
       />
     </mesh>
   );
+}
+
+function Loader() {
+  const { active, progress, errors, item, loaded, total } = useProgress();
+  return <Html center>{progress} % loaded</Html>;
 }
 
 export default App;
